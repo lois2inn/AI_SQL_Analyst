@@ -59,8 +59,6 @@ Output:
 Analysis: "New York recorded the highest number of orders last month, followed by Chicago and Austin."
 
 ## Potential enhancements:
--   Query validation and safety checks
--   Chart generation using Python visualization libraries
 -   Schema auto-discovery
 -   Multi-step AI agents
 -   Support for multiple databases
