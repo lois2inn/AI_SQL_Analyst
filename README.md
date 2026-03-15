@@ -1,68 +1,116 @@
-# AI SQL Analyst
+# Sales Data Analyst (Streamlit + SQLite + LLM)
+A lightweight analytics app that lets you ask business questions in plain English and get:
+
+- Generated SQL (SELECT-only)
+- Query results from a local SQLite database (`sales.db`)
+- LLM-generated analysis and an auto chart (bar/line) when the result shape supports it
+
+The app uses OpenRouter (OpenAI-compatible API) to:
+
+1. Convert a natural-language question into a SQLite `SELECT` query
+2. Analyze the resulting rows for patterns/insights
 
 ## Overview
-This project demonstrates how to build a simple AI-powered data analytics application that allows users to ask questions about data in natural language. The application converts the question into a SQL query using a Large Language Model (LLM), executes the query against a relational database, and returns both the results and an AI-generated explanation.
+This project demonstrates an end-to-end pattern for “conversational analytics” on top of a relational database:
 
-## Goal
-This repository is built as a hands-on learning project for developers exploring **AI-powered data applications**.
+- **User** types a business question (e.g., “Top products by revenue”)
+- **LLM** generates a **validated** SQL query
+- **SQLite** executes the query and returns a DataFrame
+- **LLM** produces a narrative analysis based on the returned rows
+- **Streamlit** displays the SQL, the results table, and a visualization (when applicable)
 
-- Python backend development
-- SQL-based analytics
-- LLM APIs
-- Lightweight application interfaces
+## Architecture
 
-The project mirrors the architecture used in modern **AI-powered analytics tools** and **data assistants**.
+### High-level components
 
-## Application Architecture
-1.  User submits a natural language question in **plain English**
-2.  The LLM converts the question into **SQL Queries**
-3.  A relational database executes the SQL query
-4.  Query results along with visualizations are returned
-5.  The LLM generates a human-readable explanation
+- **`app.py`**
+  - Streamlit UI
+  - Caching:
+    - `st.cache_resource` for the OpenAI client
+    - `st.cache_data` for SQL query results
+  - Renders:
+    - Generated SQL
+    - Results table
+    - Automatic visualization
+    - LLM analysis response
 
-<img src="app_flow.png"/>
+- **`sales_data.py`**
+  - Backend functions:
+    - `nl_to_sql(...)`: Natural language -> SQL via LLM (normalized + validated)
+    - `validate_select_only_sql(...)`: Enforces SELECT-only, single statement guardrails
+    - `run_sql_query(...)`: Executes validated SQL on SQLite and returns `(df, rows_json)`
+    - `analyze_rows_json(...)`: Sends JSON rows back to LLM for insights
+  - Optional orchestration helper:
+    - `nl_request_to_analysis(...)`
 
-## Technology Stack
-- Backend: Python
-- AI / LLM Integration: OpenAI API
-- Database: SQLite (default), PostgreSQL (optional)
-- Data Processing: Pandas, SQLAlchemy
-- UI: Streamlit
+- **`sales.db`**
+  - SQLite database storing the star-schema style tables (`customers`, `orders`, `products`)
 
-## Example Usage
-Input: "What cities had the most orders last month?"  
+- **`sales_erd.png`**
+  - Entity Relationship Diagram shown in the UI
 
-Output:
-<table>
-  <thead>
-    <tr>
-      <th scope="col">City</th>
-      <th scope="col">Orders</th>
-    </tr>
-  </thead>
-  <tbody>
-  <tr>
-    <td>New York</td>
-    <td>1200</td>
-  </tr>
-   <tr>
-    <td>Chicago</td>
-    <td>980</td>
-  </tr>
-   <tr>
-    <td>Austin</td>
-    <td>860</td>
-  </tr>
-  </tbody>
-</table>
+### Data flow
 
-Analysis: "New York recorded the highest number of orders last month, followed by Chicago and Austin."
+1. User enters a request in Streamlit
+2. `nl_to_sql()` calls the model to generate SQL
+3. SQL output is normalized (`normalize_llm_sql_output`) and validated (`validate_select_only_sql`)
+4. `run_sql_query()` executes the SQL against `sales.db` and returns:
+   - a pandas `DataFrame`
+   - JSON rows (for LLM analysis)
+5. `analyze_rows_json()` sends JSON rows to the model for pattern analysis
+6. Streamlit renders results + chart:
+   - Bar chart for *(category, value)*
+   - Line chart for *(date, value)*
+
+## SQL safety guardrails
+
+To prevent unsafe statements, the backend enforces:
+
+- Only **single-statement** queries
+- Query must begin with `SELECT` or `WITH ... SELECT ...`
+- Rejects common write/DDL/admin keywords (e.g., `INSERT`, `UPDATE`, `DELETE`, `DROP`, `PRAGMA`, etc.)
+
+If the LLM returns any extra prose or non-SQL prefixes, it is rejected.
+
+
+## Technologies used
+
+- **Python**
+- **Streamlit** (UI)
+- **SQLite** (database)
+- **pandas** (DataFrame handling)
+- **OpenAI Python SDK** (OpenAI-compatible client)
+- **OpenRouter** (API gateway / model provider)
+- **pytest** (unit tests)
+
+
+## Setup
+
+### 1) Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2) Configure environment variables
+
+Create a `.env` file in the project root:
+
+```bash
+API_KEY="<your-openrouter-api-key>"
+```
+
+### 3) Run the Streamlit app
+
+```bash
+streamlit run app.py
+```
+
 
 ## Potential enhancements:
 -   Schema auto-discovery
 -   Multi-step AI agents
 -   Support for multiple databases
--   Dashboard-style analytics interface
 
 ## License
 MIT License
