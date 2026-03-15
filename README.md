@@ -17,7 +17,7 @@ The project mirrors the architecture used in modern **AI-powered analytics tools
 1.  User submits a natural language question in **plain English**
 2.  The LLM converts the question into **SQL Queries**
 3.  A relational database executes the SQL query
-4.  Query results are returned
+4.  Query results along with visualizations are returned
 5.  The LLM generates a human-readable explanation
 
 <img src="app_flow.png"/>
