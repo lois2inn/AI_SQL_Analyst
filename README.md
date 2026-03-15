@@ -105,7 +105,21 @@ API_KEY="<your-openrouter-api-key>"
 ```bash
 streamlit run app.py
 ```
+## Usage
 
+- Pick a sample question (optional) and click **Use sample**, or type your own.
+- Click **Run**.
+- Review:
+  - Generated SQL
+  - Query results
+  - Visualization (when detected)
+  - Analysis response
+
+## Notes
+
+- This project expects a local `sales.db` in the project root.
+- For large result sets, consider adding aggregation in SQL (GROUP BY) to keep prompts small.
+- Do not commit secrets: add `.env` to `.gitignore` before publishing.
 
 ## Potential enhancements:
 -   Schema auto-discovery
